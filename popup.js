@@ -1,60 +1,64 @@
 // adding a new bookmark row to the popup
 
-import { getActiveTabURL } from "./utils";
+import { getActiveTabURL } from './utils.js';
+
 
 // adding a new bookmark row to the popup
 const addNewBookmark = (bookmarks, bookmark) => {
-  const bookmarkTitleElement = document.createElement("div");
-  const controlsElement = document.createElement("div");
-  const newBookmarkElement = document.createElement("div");
+  const bookmarkTitleElement = document.createElement('div');
+  const controlsElement = document.createElement('div');
+  const newBookmarkElement = document.createElement('div');
 
   bookmarkTitleElement.textContent = bookmark.desc;
-  bookmarkTitleElement.className = "bookmark-title";
-  controlsElement.className = "bookmark-controls";
+  bookmarkTitleElement.className = 'bookmark-title';
+  controlsElement.className = 'bookmark-controls';
 
-  setBookmarkAttributes("play", onPlay, controlsElement);
-  setBookmarkAttributes("delete", onDelete, controlsElement);
+  setBookmarkAttributes('play', onPlay, controlsElement);
+  setBookmarkAttributes('delete', onDelete, controlsElement);
 
-  newBookmarkElement.id = `bookmark-${bookmark.time}`;
-  newBookmarkElement.className = "bookmark";
-  newBookmarkElement.setAttribute("timestamp", bookmark.time);
+  newBookmarkElement.id = 'bookmark-' + bookmark.time;
+  newBookmarkElement.className = 'bookmark';
+  newBookmarkElement.setAttribute('timestamp', bookmark.time);
 
   newBookmarkElement.appendChild(bookmarkTitleElement);
   newBookmarkElement.appendChild(controlsElement);
   bookmarks.appendChild(newBookmarkElement);
 };
 
+
 const viewBookmarks = (currentBookmarks = []) => {
-  const bookmarkElement = document.getElementById("bookmarks");
-  bookmarkElement.innerHTML = "";
+  const bookmarksElement = document.getElementById('bookmarks');
+  bookmarksElement.innerHTML = '';
 
   if (currentBookmarks.length > 0) {
     for (let i = 0; i < currentBookmarks.length; i++) {
       const bookmark = currentBookmarks[i];
-      addNewBookmark(bookmarkElement, bookmark);
+      addNewBookmark(bookmarksElement, bookmark);
     }
   } else {
-    bookmarkElement.innerHTML = '<i class="row">No bookmarks to show</i>';
+    bookmarksElement.innerHTML = '<i class="row">No bookmarks to show</i>';
   }
 
   return;
 };
 
+
 const onPlay = async (e) => {
-  const bookmarkTime = e.target.parentNode.parentNode.getAttribute("timestamp");
+  const bookmarkTime = e.target.parentNode.parentNode.getAttribute('timestamp');
   const activeTab = await getActiveTabURL();
 
   chrome.tabs.sendMessage(activeTab.id, {
-    type: "PLAY",
+    type: 'PLAY',
     value: bookmarkTime,
   });
 };
 
+
 const onDelete = async (e) => {
   const activeTab = await getActiveTabURL();
-  const bookmarkTime = e.target.parentNode.parentNode.getAttribute("timestamp");
+  const bookmarkTime = e.target.parentNode.parentNode.getAttribute('timestamp');
   const bookmarkElementToDelete = document.getElementById(
-    `bookmark-${bookmarkTime}`
+    'bookmark-' + bookmarkTime
   );
 
   bookmarkElementToDelete.parentNode.removeChild(bookmarkElementToDelete);
@@ -62,28 +66,29 @@ const onDelete = async (e) => {
   chrome.tabs.sendMessage(
     activeTab.id,
     {
-      type: "DELETE",
+      type: 'DELETE',
       value: bookmarkTime,
     },
     viewBookmarks
   );
 };
 
-const setBookmarkAttributes = (src, eventListener, controlParentElement) => {
-  const controlElement = document.getElementById("img");
 
-  controlElement.sec = `assets/${src}.png`;
+const setBookmarkAttributes = (src, eventListener, controlParentElement) => {
+  const controlElement = document.createElement('img');
+
+  controlElement.src = 'assets/' + src + '.png';
   controlElement.title = src;
   controlElement.addEventListener("click", eventListener);
   controlParentElement.appendChild(controlElement);
 };
 
 // this event is a native window event that fires up when an HTML document has initially been loaded
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const activeTab = await getActiveTabURL();
 
   if (!activeTab || !activeTab.url) {
-    console.error("No active tab or URL found.");
+    console.error('No active tab or URL found.');
     return;
   }
 
@@ -91,8 +96,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const urlParameters = new URLSearchParams(queryParameters);
   const currentVideo = urlParameters.get("v");
 
-  if (activeTab.url.includes("youtube.com/watch") && currentVideo) {
+  if (activeTab.url.includes('youtube.com/watch') && currentVideo) {
     chrome.storage.sync.get([currentVideo], (data) => {
+
+      if (chrome.runtime.lastError) {
+        console.error('Error retrieving bookmarks: ', chrome.runtime.lastError.message);
+        return;
+      }
+
       const currentVideoBookmarks = data[currentVideo]
         ? JSON.parse(data[currentVideo])
         : [];
@@ -108,7 +119,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       container.innerHTML =
         '<div class="title">This is not a youtube video page</div>';
     } else {
-      console.log("Container element not found!");
+      console.log('Container element not found!');
     }
   }
 });

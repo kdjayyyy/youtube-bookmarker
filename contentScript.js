@@ -15,16 +15,16 @@
     const currentTime = youtubePlayer.currentTime; // in seconds
     const newBookmark = {
       time: currentTime,
-      desc: `Bookmark at ${getTime(currentTime)}`,
+      desc: 'Bookmark at ' + getTime(currentTime),
     };
 
     currentVideoBookmarks = await fetchBookmarks();
 
     chrome.storage.sync.set({
       [currentVideo]: JSON.stringify(
-        [...currentVideoBookmarks, newBookmark].sort((a, b) => {
-          a.time - b.time;
-        }),
+        [...currentVideoBookmarks, newBookmark].sort((a, b) => 
+          a.time - b.time
+        ),
       ),
     });
   };
@@ -38,7 +38,7 @@
       const bookmarkBtn = document.createElement('img');
 
       bookmarkBtn.src = chrome.runtime.getURL('assets/bookmark.png');
-      bookmarkBtn.className = 'ytp-button ' + 'bookmark-btn';
+      bookmarkBtn.className = 'ytp-button bookmark-btn';
       bookmarkBtn.title = 'Click to bookmark current timestamp';
 
       youtubeLeftControls =
@@ -46,11 +46,13 @@
       youtubePlayer = document.getElementsByClassName('video-stream')[0];
 
       if (youtubeLeftControls) {
+        // append only if controls exist
         youtubeLeftControls.appendChild(bookmarkBtn);
+        bookmarkBtn.addEventListener('click', addNewBookmarkEventHandler);
       } else {
+        // error handling
         console.log('ytp-left-controls element not found');
       }
-      bookmarkBtn.addEventListener('click', addNewBookmarkEventHandler);
     }
   };
 
@@ -64,7 +66,7 @@
       youtubePlayer.currentTime = value;
     } else if (type === 'DELETE') {
       currentVideoBookmarks = currentVideoBookmarks.filter(
-        (b) => b.time != value,
+        b => b.time != value,
       );
       chrome.storage.sync.set({
         [currentVideo]: JSON.stringify(currentVideoBookmarks),
