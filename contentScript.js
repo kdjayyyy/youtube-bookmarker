@@ -1,6 +1,6 @@
 (() => {
   let youtubeLeftControls, youtubePlayer;
-  let currentVideo = '';
+  let currentVideo = "";
   let currentVideoBookmarks = [];
 
   const fetchBookmarks = () => {
@@ -12,65 +12,50 @@
   };
 
   const addNewBookmarkEventHandler = async () => {
-    const currentTime = youtubePlayer.currentTime; // in seconds
+    const currentTime = youtubePlayer.currentTime;
     const newBookmark = {
       time: currentTime,
-      desc: 'Bookmark at ' + getTime(currentTime),
+      desc: "Bookmark at " + getTime(currentTime),
     };
 
     currentVideoBookmarks = await fetchBookmarks();
 
     chrome.storage.sync.set({
-      [currentVideo]: JSON.stringify(
-        [...currentVideoBookmarks, newBookmark].sort((a, b) => 
-          a.time - b.time
-        ),
-      ),
+      [currentVideo]: JSON.stringify([...currentVideoBookmarks, newBookmark].sort((a, b) => a.time - b.time))
     });
   };
 
   const newVideoLoaded = async () => {
-    const bookmarkBtnExists =
-      document.getElementsByClassName('bookmark-btn')[0];
+    const bookmarkBtnExists = document.getElementsByClassName("bookmark-btn")[0];
+
     currentVideoBookmarks = await fetchBookmarks();
 
     if (!bookmarkBtnExists) {
-      const bookmarkBtn = document.createElement('img');
+      const bookmarkBtn = document.createElement("img");
 
-      bookmarkBtn.src = chrome.runtime.getURL('assets/bookmark.png');
-      bookmarkBtn.className = 'ytp-button bookmark-btn';
-      bookmarkBtn.title = 'Click to bookmark current timestamp';
+      bookmarkBtn.src = chrome.runtime.getURL("assets/bookmark.png");
+      bookmarkBtn.className = "ytp-button " + "bookmark-btn";
+      bookmarkBtn.title = "Click to bookmark current timestamp";
 
-      youtubeLeftControls =
-        document.getElementsByClassName('ytp-left-controls')[0];
+      youtubeLeftControls = document.getElementsByClassName("ytp-left-controls")[0];
       youtubePlayer = document.getElementsByClassName('video-stream')[0];
 
-      if (youtubeLeftControls) {
-        // append only if controls exist
-        youtubeLeftControls.appendChild(bookmarkBtn);
-        bookmarkBtn.addEventListener('click', addNewBookmarkEventHandler);
-      } else {
-        // error handling
-        console.log('ytp-left-controls element not found');
-      }
+      youtubeLeftControls.appendChild(bookmarkBtn);
+      bookmarkBtn.addEventListener("click", addNewBookmarkEventHandler);
     }
   };
 
   chrome.runtime.onMessage.addListener((obj, sender, response) => {
     const { type, value, videoId } = obj;
 
-    if (type === 'NEW') {
+    if (type === "NEW") {
       currentVideo = videoId;
       newVideoLoaded();
-    } else if (type === 'PLAY') {
+    } else if (type === "PLAY") {
       youtubePlayer.currentTime = value;
-    } else if (type === 'DELETE') {
-      currentVideoBookmarks = currentVideoBookmarks.filter(
-        b => b.time != value,
-      );
-      chrome.storage.sync.set({
-        [currentVideo]: JSON.stringify(currentVideoBookmarks),
-      });
+    } else if ( type === "DELETE") {
+      currentVideoBookmarks = currentVideoBookmarks.filter((b) => b.time != value);
+      chrome.storage.sync.set({ [currentVideo]: JSON.stringify(currentVideoBookmarks) });
 
       response(currentVideoBookmarks);
     }
@@ -79,8 +64,9 @@
   newVideoLoaded();
 })();
 
-const getTime = (t) => {
+const getTime = t => {
   var date = new Date(0);
   date.setSeconds(t);
+
   return date.toISOString().substr(11, 8);
 };
